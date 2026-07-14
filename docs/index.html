@@ -217,10 +217,10 @@
     <p class="sub" data-i18n="sub">단축키 하나로 생각을 붙잡고, 아래로 끌어내리며 정리합니다. 데이터는 내 PC에 저장됩니다.</p>
     <div class="btns" id="download">
       <a class="btn primary js-dl-mac" data-i18n="dlMac" href="https://github.com/wocjf7170/flowdesk-release/releases/latest">macOS용 다운로드</a>
-      <a class="btn ghost js-dl-win" data-i18n="dlWin" href="https://github.com/wocjf7170/flowdesk-release/releases/latest">Windows용 다운로드</a>
+      <a class="btn ghost js-dl-win" data-i18n="dlWin" href="https://apps.microsoft.com/detail/9n9rjdmv11tb?hl=ko-KR&amp;gl=KR">Windows용 다운로드</a>
     </div>
     <p class="meta-note" data-i18n="hotkeyNote"><kbd>⌘</kbd> <kbd>⇧</kbd> <kbd>Space</kbd> — 어떤 앱에서든 1초 만에 입력창 호출</p>
-    <p class="meta-note" id="dl-sub" style="margin-top:8px"><a href="https://github.com/wocjf7170/flowdesk-release/releases/latest" data-i18n="allVersions">모든 버전 보기</a></p>
+    <p class="meta-note" id="dl-sub" style="margin-top:8px"><a href="https://github.com/wocjf7170/flowdesk-release/releases/latest" data-i18n="allVersions">모든 버전 보기</a> · <a class="js-dl-exe" href="https://github.com/wocjf7170/flowdesk-release/releases/latest" data-i18n="dlExe">Windows .exe 직접 다운로드</a></p>
   </div>
 </header>
 
@@ -361,8 +361,9 @@
 
     <div class="btns" style="margin-top:34px">
       <a class="btn primary js-dl-mac" data-i18n="dlMac" href="https://github.com/wocjf7170/flowdesk-release/releases/latest">macOS용 다운로드</a>
-      <a class="btn ghost js-dl-win" data-i18n="dlWin" href="https://github.com/wocjf7170/flowdesk-release/releases/latest">Windows용 다운로드</a>
+      <a class="btn ghost js-dl-win" data-i18n="dlWin" href="https://apps.microsoft.com/detail/9n9rjdmv11tb?hl=ko-KR&amp;gl=KR">Windows용 다운로드</a>
     </div>
+    <p class="meta-note" style="margin-top:10px"><a class="js-dl-exe" href="https://github.com/wocjf7170/flowdesk-release/releases/latest" data-i18n="dlExe">Windows .exe 직접 다운로드</a></p>
   </div>
 </section>
 
@@ -382,7 +383,7 @@
   // 최신 릴리스 에셋 직링크 연결
   (async () => {
     const macBtns = document.querySelectorAll('.js-dl-mac');
-    const winBtns = document.querySelectorAll('.js-dl-win');
+    const exeBtns = document.querySelectorAll('.js-dl-exe');
     const sub = document.getElementById('dl-sub');
     try {
       const r = await fetch('https://api.github.com/repos/wocjf7170/flowdesk-release/releases/latest');
@@ -392,7 +393,7 @@
         const dmg = assets.find(a => a.name.endsWith('.dmg'));
         const exe = assets.find(a => a.name.endsWith('-setup.exe')) || assets.find(a => a.name.endsWith('.exe'));
         if (dmg) macBtns.forEach(b => { b.href = dmg.browser_download_url; });
-        if (exe) winBtns.forEach(b => { b.href = exe.browser_download_url; });
+        if (exe) exeBtns.forEach(b => { b.href = exe.browser_download_url; });
         sub.querySelector('a')?.insertAdjacentText('beforebegin', `${rel.tag_name} · `);
       }
     } catch { /* API 실패 시 릴리스 페이지 링크 유지 */ }
@@ -405,6 +406,7 @@
     sub: 'Catch thoughts with one hotkey and sort them by dragging down. Your data stays on your PC.',
     dlMac: 'Download for macOS',
     dlWin: 'Download for Windows',
+    dlExe: 'Direct Windows .exe download',
     hotkeyNote: '<kbd>⌘</kbd> <kbd>⇧</kbd> <kbd>Space</kbd> — summon the input from any app in a second',
     allVersions: 'All versions',
     tagStaging: 'dump it all here',
@@ -463,12 +465,14 @@
   const KO = {};
   document.querySelectorAll('[data-i18n]').forEach((el) => { KO[el.dataset.i18n] = el.innerHTML; });
   const toggleBtn = document.getElementById('lang-toggle');
+  const STORE = { ko: 'https://apps.microsoft.com/detail/9n9rjdmv11tb?hl=ko-KR&gl=KR', en: 'https://apps.microsoft.com/detail/9n9rjdmv11tb?hl=en-US&gl=US' };
   function setLang(l) {
     document.documentElement.lang = l;
     document.querySelectorAll('[data-i18n]').forEach((el) => {
       const k = el.dataset.i18n;
       el.innerHTML = l === 'ko' ? KO[k] : (EN[k] ?? KO[k]);
     });
+    document.querySelectorAll('.js-dl-win').forEach((b) => { b.href = STORE[l] || STORE.ko; });
     toggleBtn.textContent = l === 'ko' ? 'EN' : '한국어';
     localStorage.setItem('flowdesk-lang', l);
   }
