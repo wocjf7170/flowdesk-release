@@ -4,25 +4,28 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FlowDesk — 바탕화면 생각 정리 위젯</title>
-<meta name="description" content="바탕화면에 늘 떠 있는 생각 정리 위젯. 단축키로 붙잡은 생각을 Staging → Origin → Calendar로 끌어내리며 정리합니다. 데이터는 내 PC에 저장됩니다." />
+<meta name="description" content="어떤 화면에서든 단축키 하나로 생각을 붙잡고 — 골라 보관하고, 할 일로 체크하고, 날짜에 얹어 마크다운 메모까지. 데이터는 내 PC에 저장됩니다." />
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <style>
   :root{
-    --bg:#14151D;
+    --paper:#FFFFFF;
+    --mist:#F2F5FA;
+    --ink:#14151D;
+    --muted:#6B7085;
+    --line:#E5E9F2;
+    --line-strong:#D4DAE8;
+    --blue:#3B6EF6;
+    --blue-deep:#2E56C4;
+    --blue-soft:rgba(59,110,246,.09);
+    /* 다크 목업 서피스 (브랜드 네이비 재활용) */
+    --night:#14151D;
     --panel:#1B1D28;
-    --ink:#ECEDF5;
-    --muted:#9698AE;
-    --line:rgba(255,255,255,.09);
-    --line-strong:rgba(255,255,255,.16);
     --card:#242637;
-    --card-hi:#2A2D42;
-    --accent:#6E80E8;
+    --card-line:rgba(255,255,255,.09);
+    --card-line-strong:rgba(255,255,255,.16);
+    --night-ink:#ECEDF5;
+    --night-muted:#9698AE;
     --accent-soft:rgba(110,128,232,.16);
-    /* 아이콘 3단 바 색 */
-    --bar1:#3C4270;
-    --bar2:#4C56A2;
-    --bar3:#6E80E8;
-    /* 위젯 밴드 배경 (아이콘 그라데이션 반영) */
     --stage:#262A46;
     --origin:#2F3766;
     --cal:#3C4795;
@@ -31,9 +34,10 @@
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html{scroll-behavior:smooth}
+  @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
   body{
     font-family:-apple-system,BlinkMacSystemFont,"SF Pro","Segoe UI",Roboto,"Helvetica Neue","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
-    background:var(--bg);
+    background:var(--paper);
     color:var(--ink);
     line-height:1.55;
     -webkit-font-smoothing:antialiased;
@@ -41,76 +45,114 @@
   }
   .wrap{max-width:var(--maxw);margin:0 auto;padding:0 28px}
   a{color:inherit}
+  :focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:4px}
 
   /* ---------- nav ---------- */
   nav{
     position:sticky;top:0;z-index:50;
     backdrop-filter:saturate(180%) blur(12px);
-    background:rgba(20,21,29,.72);
+    background:rgba(255,255,255,.82);
     border-bottom:1px solid var(--line);
   }
-  nav .wrap{display:flex;align-items:center;height:60px}
-  .logo{display:flex;align-items:center;gap:10px;font-weight:600;font-size:16px}
-  .logo svg{display:block}
+  nav .wrap{display:flex;align-items:center;gap:22px;height:60px}
+  .logo{display:flex;align-items:center;gap:9px;font-weight:650;font-size:16px;text-decoration:none}
+  .logo svg,.foot-logo svg{display:block;flex:none}
+  .nav-links{margin-left:auto;display:flex;align-items:center;gap:20px;font-size:13.5px}
+  .nav-links a{color:var(--muted);text-decoration:none}
+  .nav-links a:hover{color:var(--ink)}
+  #lang-toggle{
+    background:none;border:1px solid var(--line-strong);border-radius:8px;
+    padding:4px 10px;font-size:12.5px;color:var(--muted);cursor:pointer;font-family:inherit
+  }
+  #lang-toggle:hover{color:var(--ink);border-color:var(--ink)}
+  .nav-cta{
+    background:var(--blue);color:#fff !important;border-radius:9px;
+    padding:8px 16px;font-weight:600;text-decoration:none
+  }
+  .nav-cta:hover{background:var(--blue-deep)}
+  @media(max-width:640px){.nav-links a.nav-plain{display:none}}
 
-  /* ---------- hero ---------- */
-  header.hero{padding:88px 0 40px;text-align:center;position:relative}
-  header.hero::before{
-    content:"";position:absolute;inset:0;pointer-events:none;
-    background:radial-gradient(600px 320px at 50% -40px, rgba(110,128,232,.18), transparent 70%);
-  }
-  .hero .wrap{position:relative}
-  .kicker{font-size:13px;color:var(--muted);letter-spacing:.04em;margin-bottom:22px}
-  h1{font-size:clamp(38px,6vw,64px);line-height:1.05;font-weight:650;letter-spacing:-0.03em}
-  .flow-line{
-    display:inline-flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;
-    margin:26px 0 10px;font-size:clamp(15px,2.4vw,19px);color:var(--muted)
-  }
-  .flow-line b{font-weight:600}
-  .flow-line b:nth-of-type(1){color:#9AA0D8}
-  .flow-line b:nth-of-type(2){color:#B4BBF0}
-  .flow-line b:nth-of-type(3){color:#8FA0FF}
-  .flow-line .arw{opacity:.35}
-  .sub{max-width:560px;margin:18px auto 0;color:var(--muted);font-size:16px}
-  .btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:34px}
+  /* ---------- buttons ---------- */
+  .btns{display:flex;gap:12px;flex-wrap:wrap}
   .btn{
     display:inline-flex;align-items:center;gap:8px;
-    padding:12px 22px;border-radius:11px;font-size:15px;font-weight:550;text-decoration:none;
+    padding:12px 22px;border-radius:11px;font-size:15px;font-weight:600;text-decoration:none;
     transition:.15s;border:1px solid transparent
   }
-  .btn.primary{background:var(--accent);color:#12131A}
-  .btn.primary:hover{background:#8090F0}
-  .btn.ghost{background:transparent;color:var(--ink);border-color:var(--line-strong)}
-  .btn.ghost:hover{border-color:var(--accent)}
-  .meta-note{margin-top:16px;font-size:13px;color:var(--muted)}
+  .btn.primary{background:var(--blue);color:#fff}
+  .btn.primary:hover{background:var(--blue-deep)}
+  .btn.ghost{background:var(--paper);color:var(--ink);border-color:var(--line-strong)}
+  .btn.ghost:hover{border-color:var(--blue);color:var(--blue)}
+  .meta-note{margin-top:15px;font-size:13px;color:var(--muted)}
   .meta-note a{color:var(--muted)}
   .meta-note a:hover{color:var(--ink)}
   kbd{
-    font-family:inherit;background:var(--card);border:1px solid var(--line-strong);border-bottom-width:2px;
+    font-family:inherit;background:var(--paper);border:1px solid var(--line-strong);border-bottom-width:2px;
     border-radius:6px;padding:1px 7px;font-size:12px;color:var(--ink)
   }
 
-  /* ---------- widget mock ---------- */
-  .stage-area{padding:20px 0 96px}
-  .demo-video{
-    display:block;width:100%;max-width:760px;margin:0 auto;
-    border-radius:22px;border:1px solid var(--line);
-    box-shadow:0 40px 80px -30px rgba(0,0,0,.7), 0 0 0 1px rgba(110,128,232,.06);
+  /* ---------- hero ---------- */
+  header.hero{position:relative;overflow:hidden;background:var(--mist)}
+  header.hero::before{ /* 좌하단 블루 블롭 (PDF 장식) */
+    content:"";position:absolute;left:-140px;bottom:-190px;width:420px;height:420px;
+    border-radius:50%;background:var(--blue);opacity:.14;pointer-events:none
   }
+  header.hero::after{
+    content:"";position:absolute;left:120px;bottom:-260px;width:340px;height:340px;
+    border-radius:50%;background:var(--blue);opacity:.08;pointer-events:none
+  }
+  .hero-grid{
+    position:relative;display:grid;grid-template-columns:1fr;gap:48px;align-items:center;
+    padding:76px 0 84px
+  }
+  @media(min-width:900px){.hero-grid{grid-template-columns:1.08fr .92fr;gap:56px}}
+  .kicker{font-size:13px;color:var(--blue);font-weight:650;letter-spacing:.05em;margin-bottom:20px}
+  h1{font-size:clamp(36px,5.4vw,58px);line-height:1.12;font-weight:450;letter-spacing:-0.03em}
+  h1 b{font-weight:800}
+  .chain{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:24px}
+  .chain .chip{
+    background:var(--blue-soft);color:var(--blue-deep);border-radius:999px;
+    padding:5px 13px;font-size:13.5px;font-weight:650;white-space:nowrap
+  }
+  .chain .arw{color:var(--line-strong);font-size:13px}
+  .sub{max-width:480px;margin:16px 0 0;color:var(--muted);font-size:16px}
+  .hero .btns{margin-top:28px}
+
+  /* ---------- 다크 목업 공통 ---------- */
   .device{
-    max-width:420px;margin:0 auto;
-    background:var(--panel);border:1px solid var(--line);border-radius:22px;
-    box-shadow:0 40px 80px -30px rgba(0,0,0,.7), 0 0 0 1px rgba(110,128,232,.06);
-    overflow:hidden
+    background:var(--panel);border:1px solid var(--card-line);border-radius:20px;
+    box-shadow:0 40px 80px -34px rgba(20,21,29,.45), 0 0 0 1px rgba(59,110,246,.05);
+    overflow:hidden;color:var(--night-ink)
   }
-  .device-bar{display:flex;align-items:center;gap:7px;padding:12px 15px;border-bottom:1px solid var(--line)}
-  .dot{width:9px;height:9px;border-radius:50%;background:var(--line-strong)}
-  .device-title{margin-left:auto;font-size:12px;color:var(--muted)}
-  .band{padding:14px 15px;border-bottom:1px solid var(--line)}
+  .device-bar{display:flex;align-items:center;gap:7px;padding:11px 15px;border-bottom:1px solid var(--card-line)}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--card-line-strong)}
+  .device-title{margin-left:auto;font-size:12px;color:var(--night-muted)}
+  .quick-row{
+    display:flex;align-items:center;gap:9px;margin:13px 15px 0;
+    background:var(--card);border:1px solid var(--blue);border-radius:9px;
+    padding:9px 12px;font-size:13.5px
+  }
+  .quick-row .caret{width:1.5px;height:15px;background:var(--night-ink);animation:blink 1.1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+  @media(prefers-reduced-motion:reduce){.quick-row .caret{animation:none}}
+  .quick-row input{
+    flex:1;background:none;border:0;outline:none;font:inherit;font-size:13.5px;
+    color:var(--night-ink);min-width:0
+  }
+  .quick-row input::placeholder{color:var(--night-muted)}
+  /* 인터랙티브 데모 */
+  .thought[draggable="true"]{cursor:grab}
+  .thought.new{animation:pop .25s ease-out}
+  @keyframes pop{from{transform:scale(.96);opacity:.3}}
+  @media(prefers-reduced-motion:reduce){.thought.new{animation:none}}
+  .band.dragover{box-shadow:inset 0 0 0 1.5px var(--blue)}
+  .cal-day.dragover{border-color:var(--blue);background:var(--accent-soft)}
+  .band{padding:13px 15px;border-bottom:1px solid var(--card-line)}
+  .band:first-of-type{margin-top:13px}
   .band:last-child{border-bottom:0}
-  .band-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .band-head{display:flex;align-items:center;gap:8px;margin-bottom:9px}
   .band-name{font-size:11px;font-weight:700;letter-spacing:.14em}
-  .band-tag{font-size:11px;color:var(--muted);margin-left:auto}
+  .band-tag{font-size:11px;color:var(--night-muted);margin-left:auto}
   .b-staging{background:var(--stage)}
   .b-staging .band-name{color:#8E94C8}
   .b-origin{background:var(--origin)}
@@ -118,230 +160,357 @@
   .b-cal{background:var(--cal)}
   .b-cal .band-name{color:#E4E8FF}
   .thought{
-    background:var(--card);border:1px solid var(--line);border-radius:9px;
-    padding:9px 12px;font-size:13.5px;margin-bottom:7px;display:flex;align-items:center;gap:8px;color:var(--ink)
+    background:var(--card);border:1px solid var(--card-line);border-radius:9px;
+    padding:8px 12px;font-size:13.5px;margin-bottom:7px;display:flex;align-items:center;gap:8px
   }
   .thought:last-child{margin-bottom:0}
-  .thought .grip{color:var(--muted);font-size:12px;letter-spacing:1px}
+  .thought .grip{color:var(--night-muted);font-size:12px;letter-spacing:1px}
   .thought.fade{opacity:.4}
-  .thought.pin{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent-soft)}
+  .thought.pin{border-color:var(--blue);box-shadow:0 0 0 1px var(--accent-soft)}
   .thought.done{opacity:.5;text-decoration:line-through}
   .thought .chk{
-    width:14px;height:14px;border-radius:50%;background:var(--accent);color:#12131A;
+    width:14px;height:14px;border-radius:50%;background:var(--blue);color:#fff;
     font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex:none
+  }
+  .thought .box{
+    width:14px;height:14px;border-radius:50%;border:1.5px solid var(--card-line-strong);flex:none
   }
   .cal-row{display:flex;gap:7px}
   .cal-day{
-    flex:1;background:var(--card);border:1px solid var(--line);border-radius:9px;padding:8px 6px;text-align:center;min-height:70px
+    flex:1;background:var(--card);border:1px solid var(--card-line);border-radius:9px;
+    padding:8px 6px;text-align:center;min-height:70px
   }
-  .cal-day .dow{font-size:10px;color:var(--muted)}
+  .cal-day .dow{font-size:10px;color:var(--night-muted)}
   .cal-day .num{font-size:17px;font-weight:600;margin-top:1px}
-  .cal-day.active{border-color:var(--accent)}
+  .cal-day.active{border-color:var(--blue)}
   .cal-day .evt{margin-top:6px;font-size:10px;line-height:1.25;background:var(--accent-soft);color:#C6CEFF;border-radius:5px;padding:3px 4px;text-align:left}
 
   /* ---------- sections ---------- */
-  section{padding:72px 0;border-top:1px solid var(--line)}
-  .sec-label{font-size:12px;letter-spacing:.16em;font-weight:700;color:var(--accent);margin-bottom:14px}
-  h2{font-size:clamp(24px,3.6vw,32px);font-weight:640;letter-spacing:-0.02em;line-height:1.2}
-  .lead{color:var(--muted);font-size:16px;max-width:520px;margin-top:12px}
+  section{padding:84px 0;position:relative;overflow:hidden;scroll-margin-top:60px}
+  section.alt{background:var(--mist)}
+  .sec-label{font-size:12px;letter-spacing:.16em;font-weight:700;color:var(--blue);margin-bottom:14px}
+  h2{font-size:clamp(24px,3.6vw,34px);font-weight:750;letter-spacing:-0.02em;line-height:1.2}
+  h2 .thin{font-weight:450}
+  .lead{color:var(--muted);font-size:16px;max-width:520px;margin-top:14px}
+  .center{text-align:center}
+  .center .lead{margin-left:auto;margin-right:auto}
 
-  .steps{display:grid;grid-template-columns:1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-top:38px}
-  @media(min-width:760px){.steps{grid-template-columns:repeat(3,1fr)}}
-  .step{background:var(--panel);padding:26px 24px;position:relative}
-  .step::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px}
-  .step:nth-child(1)::before{background:var(--bar1)}
-  .step:nth-child(2)::before{background:var(--bar2)}
-  .step:nth-child(3)::before{background:var(--bar3)}
-  .step .idx{font-size:12px;font-weight:700;letter-spacing:.14em;color:var(--muted)}
-  .step h3{font-size:18px;font-weight:620;margin:10px 0 8px;letter-spacing:-0.01em}
-  .step p{font-size:14.5px;color:var(--muted)}
-  .step .def{margin-top:12px;font-size:12.5px;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 11px}
-  .step .def b{font-weight:650;color:#B4BBF0}
-
-  /* feature rows */
-  .feature{display:grid;grid-template-columns:1fr;gap:14px;align-items:center;margin-top:14px}
-  @media(min-width:820px){.feature{grid-template-columns:1fr 1fr;gap:56px}}
-  .feature.rev .fig{order:-1}
-  .fig{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:26px;min-height:180px;display:flex;align-items:center;justify-content:center}
-
-  .kbdrow{display:flex;gap:8px;align-items:center;font-size:15px;color:var(--muted);flex-wrap:wrap}
-
-  /* install / faq */
-  .faq{margin-top:34px;display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden}
-  details{background:var(--panel);padding:0}
-  summary{cursor:pointer;list-style:none;padding:18px 22px;font-size:15px;font-weight:550;display:flex;align-items:center;gap:12px}
-  summary::-webkit-details-marker{display:none}
-  summary .plat{font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--accent);border:1px solid var(--line-strong);border-radius:5px;padding:2px 7px;white-space:nowrap;flex:none}
-  summary::after{content:"+";margin-left:auto;color:var(--muted);font-size:18px}
-  details[open] summary::after{content:"–"}
-  details p{padding:0 22px 20px;color:var(--muted);font-size:14.5px}
-  details p b{color:var(--ink);font-weight:600}
-
-  .privacy{margin-top:26px;font-size:13.5px;color:var(--muted);text-align:center}
-
-  footer{border-top:1px solid var(--line);padding:40px 0 60px;text-align:center;color:var(--muted);font-size:13.5px}
-  footer a{text-decoration:none;color:var(--muted)}
-  footer a:hover{color:var(--ink)}
-  .foot-links{display:flex;gap:20px;justify-content:center;margin-bottom:14px}
-  .lang-btn{
-    margin-left:auto;font-size:12px;font-weight:600;letter-spacing:.06em;cursor:pointer;
-    padding:5px 12px;border-radius:8px;border:1px solid var(--line-strong);
-    background:transparent;color:var(--muted);font-family:inherit
+  /* 30초 영상 */
+  .video-sec{text-align:center}
+  .video-sec .lead{margin-left:auto;margin-right:auto}
+  .phone{
+    display:inline-block;margin-top:36px;background:var(--night);border-radius:30px;padding:10px;
+    box-shadow:0 40px 80px -34px rgba(20,21,29,.5), 0 0 0 1px rgba(59,110,246,.06)
   }
-  .lang-btn:hover{color:var(--ink);border-color:var(--accent)}
+  .phone video{display:block;width:min(320px,76vw);aspect-ratio:9/16;border-radius:21px;background:#000}
+  .hero-phone{margin:0 auto;justify-self:center}
+  .hero-phone video{width:min(290px,72vw)}
+  .demo-device{max-width:420px;margin:38px auto 0;text-align:left}
+
+  /* feature rows (텍스트 + 목업) */
+  .feature{display:grid;grid-template-columns:1fr;gap:36px;align-items:center}
+  @media(min-width:860px){.feature{grid-template-columns:1fr 1fr;gap:64px}}
+  .kbd-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:24px;font-size:13px;color:var(--muted)}
+  .kbd-row .arw{opacity:.5}
+  .capture-blob::before{
+    content:"";position:absolute;right:-160px;top:-120px;width:380px;height:380px;
+    border-radius:50%;background:var(--blue);opacity:.07;pointer-events:none
+  }
+  .mini-device{max-width:400px;margin:0 auto}
+  .mini-device .hint{padding:10px 15px 13px;font-size:12px;color:var(--night-muted)}
+  .mini-device .hint b{color:var(--night-ink);font-weight:600}
+
+  /* 3단계 카드 */
+  .steps{display:grid;grid-template-columns:1fr;gap:16px;margin-top:40px}
+  @media(min-width:760px){.steps{grid-template-columns:repeat(3,1fr)}}
+  .step{
+    background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);
+    padding:26px 24px
+  }
+  .step .idx{font-size:12px;font-weight:700;letter-spacing:.14em;color:var(--blue)}
+  .step h3{font-size:18px;font-weight:700;margin:10px 0 8px;letter-spacing:-0.01em}
+  .step p{font-size:14.5px;color:var(--muted)}
+  .step .def{margin-top:14px;font-size:12.5px;background:var(--mist);border:1px solid var(--line);border-radius:8px;padding:8px 11px}
+  .step .def b{font-weight:700;color:var(--blue-deep)}
+  section.alt .step .def{background:var(--paper)}
+
+  /* 투두 카드 */
+  .duo-card{border-radius:18px;padding:34px 30px;border:1px solid var(--line);max-width:560px;margin:0 auto}
+  .duo-card.dark{background:var(--panel);border-color:var(--card-line);color:var(--night-ink)}
+  .duo-card .sec-label{margin-bottom:12px}
+  .duo-card.dark .sec-label{color:#8FA0FF}
+  .duo-card h3{font-size:clamp(20px,2.6vw,24px);font-weight:750;letter-spacing:-0.02em;line-height:1.25}
+  .duo-card p{font-size:14.5px;color:var(--muted);margin-top:12px}
+  .duo-card.dark p{color:var(--night-muted)}
+  .todo-list{margin-top:22px;display:flex;flex-direction:column;gap:7px}
+
+  /* 상세 패널 목업 */
+  .detail-panel{max-width:400px;margin:0 auto;padding-bottom:4px}
+  .dp-head{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--card-line);font-size:14.5px;font-weight:600}
+  .dp-head .x{margin-left:auto;color:var(--night-muted);font-size:13px}
+  .dp-row{display:flex;align-items:center;gap:8px;padding:11px 16px;border-bottom:1px solid var(--card-line);font-size:13px}
+  .dp-row .lbl{color:var(--night-muted);font-size:12px;width:52px;flex:none}
+  .tag-dot{width:15px;height:15px;border-radius:50%;flex:none}
+  .tag-dot.sel{box-shadow:0 0 0 2px var(--panel), 0 0 0 3.5px #fff}
+  .dp-date{background:var(--card);border:1px solid var(--card-line);border-radius:7px;padding:3px 9px;font-size:12.5px}
+  .dp-note{padding:13px 16px;font-size:13px;line-height:1.7;color:var(--night-ink)}
+  .dp-note code{background:var(--card);border:1px solid var(--card-line);border-radius:5px;padding:1px 6px;font-size:12px}
+  .dp-note a{color:#8FA0FF;text-decoration:underline}
+  .dp-note ul{margin:2px 0 0 18px}
+  .dp-foot{display:flex;align-items:center;gap:8px;padding:12px 16px;border-top:1px solid var(--card-line);font-size:13px;color:var(--night-muted)}
+  .feat-list{margin-top:24px;display:flex;flex-direction:column;gap:9px}
+  .feat-list li{
+    list-style:none;font-size:14px;color:var(--muted);
+    display:flex;gap:10px;align-items:baseline
+  }
+  .feat-list li::before{content:"—";color:var(--blue);flex:none}
+  .feat-list b{color:var(--ink);font-weight:650}
+
+  /* 설치 FAQ */
+  .faq{max-width:680px;margin:38px auto 0;display:flex;flex-direction:column;gap:10px}
+  .faq details{
+    background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden
+  }
+  .faq summary{
+    display:flex;align-items:center;gap:12px;padding:15px 18px;cursor:pointer;
+    font-size:14.5px;font-weight:600;list-style:none
+  }
+  .faq summary::-webkit-details-marker{display:none}
+  .faq summary:hover{background:var(--mist)}
+  .plat{
+    flex:none;font-size:10.5px;font-weight:700;letter-spacing:.1em;color:var(--blue-deep);
+    background:var(--blue-soft);border-radius:6px;padding:3px 8px
+  }
+  .faq p{padding:0 18px 16px;font-size:14px;color:var(--muted)}
+  .faq p b{color:var(--ink)}
+  .install-note{margin-top:16px;font-size:13.5px;color:var(--muted)}
+  .install-note b{color:var(--blue-deep)}
+
+  /* ---------- footer ---------- */
+  footer{
+    position:relative;overflow:hidden;background:var(--night);color:var(--night-ink);
+    text-align:center;padding:92px 0 0
+  }
+  footer::before{
+    content:"";position:absolute;left:-180px;top:-120px;width:460px;height:460px;
+    border-radius:50%;background:#1E2133;pointer-events:none
+  }
+  footer::after{
+    content:"";position:absolute;right:-200px;bottom:-220px;width:520px;height:520px;
+    border-radius:50%;background:#191C2B;pointer-events:none
+  }
+  footer .wrap{position:relative}
+  .foot-logo{display:inline-flex;align-items:center;gap:9px;font-weight:650;font-size:17px}
+  .foot-tag{font-size:clamp(24px,3.6vw,34px);font-weight:450;letter-spacing:-0.02em;line-height:1.25;margin-top:26px}
+  .foot-tag b{font-weight:800}
+  .foot-privacy{max-width:460px;margin:18px auto 0;font-size:13px;color:var(--night-muted)}
+  footer .btns{justify-content:center;margin-top:32px}
+  footer .btn.ghost{background:transparent;color:var(--night-ink);border-color:var(--card-line-strong)}
+  footer .btn.ghost:hover{border-color:var(--blue);color:#fff}
+  footer .meta-note a{color:var(--night-muted)}
+  footer .meta-note a:hover{color:var(--night-ink)}
+  .foot-links{
+    display:flex;gap:22px;justify-content:center;flex-wrap:wrap;
+    border-top:1px solid var(--card-line);margin-top:56px;padding:22px 0;font-size:13px;color:var(--night-muted)
+  }
+  .foot-links a{color:var(--night-muted);text-decoration:none}
+  .foot-links a:hover{color:var(--night-ink)}
+  .copyright{padding-bottom:26px;font-size:12px;color:var(--night-muted);opacity:.7}
 </style>
 </head>
 <body>
 
 <nav>
   <div class="wrap">
-    <div class="logo">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <rect x="7"  y="4"    width="10" height="3.4" rx="1.7" fill="#3C4270"/>
-        <rect x="5"  y="10.3" width="14" height="3.4" rx="1.7" fill="#4C56A2"/>
-        <rect x="3"  y="16.6" width="18" height="3.4" rx="1.7" fill="#6E80E8"/>
-      </svg>
-      FlowDesk
+    <a class="logo" href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="7" y="4.5" width="10" height="3.4" rx="1.7" fill="#3C4270"/><rect x="5" y="10.3" width="14" height="3.4" rx="1.7" fill="#4C56A2"/><rect x="3" y="16.1" width="18" height="3.4" rx="1.7" fill="#6E80E8"/></svg>FlowDesk</a>
+    <div class="nav-links">
+      <a class="nav-plain" href="#capture" data-i18n="navCapture">1초 캡처</a>
+      <a class="nav-plain" href="#how" data-i18n="navHow">작동 방식</a>
+      <a class="nav-plain" href="#install" data-i18n="navInstall">설치 안내</a>
+      <button id="lang-toggle" type="button">EN</button>
+      <a class="nav-cta" href="#download" data-i18n="navCta">무료 다운로드</a>
     </div>
-    <button class="lang-btn" id="lang-toggle">EN</button>
   </div>
 </nav>
 
+<!-- ═══════════ 1. 히어로 ═══════════ -->
 <header class="hero">
-  <div class="wrap">
-    <div class="kicker" data-i18n="kicker">바탕화면에 늘 떠 있는 생각 정리 위젯</div>
-    <h1 data-i18n="h1">떠오르면 적고,<br>가라앉으면 남는다.</h1>
-    <div class="flow-line">
-      <b>Staging</b><span class="arw">→</span><b>Origin</b><span class="arw">→</span><b>Calendar</b>
+  <div class="wrap hero-grid">
+    <div>
+      <p class="kicker" data-i18n="kicker">바탕화면에 늘 떠 있는 생각 정리 위젯</p>
+      <h1 data-i18n="h1">스치는 생각이,<br><b>일정이 됩니다.</b></h1>
+      <div class="chain">
+        <span class="chip" data-i18n="c1">붙잡기</span><span class="arw">→</span>
+        <span class="chip" data-i18n="c2">골라 남기기</span><span class="arw">→</span>
+        <span class="chip" data-i18n="c3">할 일</span><span class="arw">→</span>
+        <span class="chip" data-i18n="c4">일정</span><span class="arw">→</span>
+        <span class="chip" data-i18n="c5">마크다운 메모</span>
+      </div>
+      <p class="sub" data-i18n="sub">어떤 화면에서든 단축키 하나. 데이터는 내 PC에 저장됩니다.</p>
+      <div class="btns" id="download">
+        <a class="btn primary js-dl-win" target="_blank" rel="noopener" data-i18n="dlWin" href="https://apps.microsoft.com/detail/9n9rjdmv11tb?hl=ko-KR&amp;gl=KR">Windows용 다운로드</a>
+        <a class="btn ghost js-dl-mac" target="_blank" rel="noopener" data-i18n="dlMac" href="https://github.com/wocjf7170/flowdesk-release/releases/latest">macOS용 다운로드</a>
+      </div>
+      <p class="meta-note" data-i18n="hotkeyNote"><kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>Space</kbd> <span style="opacity:.55">(macOS <kbd>⌘</kbd> <kbd>⇧</kbd> <kbd>Space</kbd>)</span> — 어떤 앱에서든 1초 만에 입력창 호출</p>
+      <p class="meta-note" id="dl-sub"><span data-i18n="storeNote">Windows는 Microsoft Store에서 안전하게 설치됩니다</span> · <a href="https://github.com/wocjf7170/flowdesk-release/releases/latest" target="_blank" rel="noopener" data-i18n="allVersions">모든 버전</a> · <a class="js-dl-exe" target="_blank" rel="noopener" href="https://github.com/wocjf7170/flowdesk-release/releases/latest" data-i18n="dlExe">.exe 직접 다운로드</a></p>
     </div>
-    <p class="sub" data-i18n="sub">단축키 하나로 생각을 붙잡고, 아래로 끌어내리며 정리합니다. 데이터는 내 PC에 저장됩니다.</p>
-    <div class="btns" id="download">
-      <a class="btn primary js-dl-mac" target="_blank" rel="noopener" data-i18n="dlMac" href="https://github.com/wocjf7170/flowdesk-release/releases/latest">macOS용 다운로드</a>
-      <a class="btn ghost js-dl-win" target="_blank" rel="noopener" data-i18n="dlWin" href="https://apps.microsoft.com/detail/9n9rjdmv11tb?hl=ko-KR&amp;gl=KR">Windows용 다운로드</a>
+
+    <!-- 히어로: 30초 쇼츠 자동재생 (자막 내장, 음소거 루프) -->
+    <div class="phone hero-phone">
+      <video id="promo" src="promo-ko.mp4" poster="promo-ko-poster.jpg" autoplay muted loop playsinline controls></video>
     </div>
-    <p class="meta-note" data-i18n="hotkeyNote"><kbd>⌘</kbd> <kbd>⇧</kbd> <kbd>Space</kbd> — 어떤 앱에서든 1초 만에 입력창 호출</p>
-    <p class="meta-note" id="dl-sub" style="margin-top:8px"><a href="https://github.com/wocjf7170/flowdesk-release/releases/latest" data-i18n="allVersions">모든 버전 보기</a> · <a class="js-dl-exe" target="_blank" rel="noopener" href="https://github.com/wocjf7170/flowdesk-release/releases/latest" data-i18n="dlExe">Windows .exe 직접 다운로드</a></p>
   </div>
 </header>
 
-<!-- widget mock -->
-<div class="stage-area">
+<!-- ═══════════ 2. 미니 데모 (직접 써보기) ═══════════ -->
+<section id="demo" class="video-sec">
   <div class="wrap">
-    <video class="demo-video" src="clip.mp4" autoplay muted loop playsinline aria-label="FlowDesk demo"></video>
+    <p class="sec-label" data-i18n="lblDemo">미니 데모</p>
+    <h2 data-i18n="h2Demo"><span class="thin">설치 전에,</span> <b>직접 써보세요.</b></h2>
+    <p class="lead" data-i18n="demoHint">입력하고 <b>Enter</b>, 카드는 <b>아래 칸으로 드래그</b>, 동그라미는 <b>체크</b></p>
+    <div class="device demo-device" id="hero-demo" aria-label="FlowDesk interactive demo">
+      <div class="device-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="device-title">FlowDesk</span></div>
+      <div class="quick-row"><input type="text" maxlength="40" data-i18n-ph="mPh" placeholder="지금 떠오른 생각…" aria-label="빠른 입력"></div>
+      <div class="band b-staging">
+        <div class="band-head"><span class="band-name">STAGING</span><span class="band-tag" data-i18n="tagStaging">일단 쏟아내는 곳</span></div>
+        <div class="thought"><span class="grip">⠿</span><span data-i18n="mTh1">회의실 예약 확인</span></div>
+        <div class="thought fade"><span class="grip">⠿</span><span data-i18n="mTh2">점심 뭐 먹지</span></div>
+        <div class="thought pin"><span class="grip">⠿</span><span data-i18n="mQuick2">월간 보고서 초안 쓰기</span></div>
+      </div>
+      <div class="band b-origin">
+        <div class="band-head"><span class="band-name">ORIGIN</span><span class="band-tag" data-i18n="tagOrigin">골라 남긴 것</span></div>
+        <div class="thought"><span class="box"></span><span data-i18n="mQuick3">월간 보고서 초안 쓰기</span></div>
+        <div class="thought done"><span class="chk">✓</span><span data-i18n="mTh3">운동 예약하기</span></div>
+      </div>
+      <div class="band b-cal">
+        <div class="band-head"><span class="band-name">CALENDAR</span><span class="band-tag" data-i18n="tagCal">날짜가 된 것</span></div>
+        <div class="cal-row">
+          <div class="cal-day"><div class="dow" data-i18n="dowMon">월</div><div class="num">20</div></div>
+          <div class="cal-day active"><div class="dow" data-i18n="dowTue">화</div><div class="num">21</div><div class="evt" data-i18n="mEvt">월간 보고서</div></div>
+          <div class="cal-day"><div class="dow" data-i18n="dowWed">수</div><div class="num">22</div></div>
+        </div>
+      </div>
+    </div>
   </div>
-</div>
+</section>
 
-<!-- 3-stage explained -->
-<section>
+<!-- ═══════════ 3. 1초 캡처 ═══════════ -->
+<section id="capture" class="capture-blob alt">
+  <div class="wrap feature">
+    <div>
+      <p class="sec-label" data-i18n="lblCap">1초 캡처</p>
+      <h2 data-i18n="h2Cap">메모 앱 여는 사이,<br><b>생각을 놓친 적 있나요?</b></h2>
+      <p class="lead" data-i18n="leadCap">코딩 중에도, 회의 중에도 — 단축키 하나, Enter 한 번이면 끝. 곧장 Staging 맨 위로 저장되고, 하던 일은 끊기지 않습니다.</p>
+      <div class="kbd-row">
+        <kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>Space</kbd><span class="arw">→</span><span data-i18n="typeWord">입력</span><span class="arw">→</span><kbd>Enter</kbd>
+      </div>
+    </div>
+    <div class="device mini-device" aria-hidden="true">
+      <div class="device-bar"><span class="dot"></span><span class="dot"></span><span class="device-title" data-i18n="quickLabel">빠른 입력</span></div>
+      <div class="quick-row"><span data-i18n="mQuick4">월간 보고서 초안 쓰기</span><span class="caret"></span></div>
+      <p class="hint"><b>Enter</b> — <span data-i18n="quickHint">바로 Staging에 저장</span></p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 4. 세 단계 (구체화) ═══════════ -->
+<section id="how">
   <div class="wrap">
-    <div class="sec-label" data-i18n="lblHow">어떻게 작동하나</div>
-    <h2 data-i18n="h2How">세 단계로 가라앉힙니다.</h2>
-    <p class="lead" data-i18n="leadHow">위로 정리하지 않습니다. 괜찮은 생각만 아래로 끌어내리면 더 단단한 자리에 남습니다.</p>
-
+    <div class="center">
+      <p class="sec-label" data-i18n="lblHow">어떻게 작동하나</p>
+      <h2 data-i18n="h2How"><span class="thin">세 단계로</span> <b>구체화됩니다.</b></h2>
+      <p class="lead" data-i18n="leadHow">정리하지 마세요 — 가라앉게 두세요. 폴더도 태그도 없이, 남길 생각만 아래로 끌어내리면 더 단단한 자리에 남습니다.</p>
+    </div>
     <div class="steps">
       <div class="step">
-        <div class="idx">01 · STAGING</div>
+        <p class="idx">01 · STAGING</p>
         <h3 data-i18n="s1h">일단 쏟아내는 곳</h3>
-        <p data-i18n="s1p">떠오른 순서대로 쌓입니다. 분류는 나중 일 — 전부 남길 필요 없습니다.</p>
-        <div class="def" data-i18n="s1d"><b>= 임시 보관.</b> 안 고른 건 <b>⟳</b> 한 번에 비워집니다.</div>
+        <p data-i18n="s1p">떠오른 순서대로 쌓입니다. 골라내는 건 나중 일 — 전부 남길 필요도 없습니다.</p>
+        <p class="def" data-i18n="s1d"><b>= 임시 보관.</b> 고르지 않은 건 ⟳ 한 번에 비웁니다.</p>
       </div>
       <div class="step">
-        <div class="idx">02 · ORIGIN</div>
-        <h3 data-i18n="s2h">골라 남긴 자리</h3>
-        <p data-i18n="s2p">아래로 끌어내린 것만 가라앉아 남습니다. 여기부터는 사라지지 않습니다.</p>
-        <div class="def" data-i18n="s2d"><b>= 영구 보관.</b> 끝낸 일은 체크 — 완료는 더 아래로.</div>
+        <p class="idx">02 · ORIGIN</p>
+        <h3 data-i18n="s2h">골라 남기는 자리</h3>
+        <p data-i18n="s2p">아래로 끌어내린 것만 남습니다. 여기부터는 사라지지 않습니다.</p>
+        <p class="def" data-i18n="s2d"><b>= 영구 보관.</b> 할 일이면 체크 — 끝낸 일은 더 아래로.</p>
       </div>
       <div class="step">
-        <div class="idx">03 · CALENDAR</div>
+        <p class="idx">03 · CALENDAR</p>
         <h3 data-i18n="s3h">날짜가 되는 곳</h3>
-        <p data-i18n="s3p">날짜 위로 끌어놓으면 그대로 일정입니다. 위젯은 늘 떠 있으니 다시 열 일이 없습니다.</p>
-        <div class="def" data-i18n="s3d"><b>= 일정.</b> 드래그 한 번으로 날짜에 고정.</div>
+        <p data-i18n="s3p">날짜 위에 놓는 순간 일정입니다. 입력 폼도, 창도 없습니다.</p>
+        <p class="def" data-i18n="s3d"><b>= 일정.</b> 드래그 한 번으로 날짜에 고정.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- capture -->
+<!-- ═══════════ 4. 투두 ═══════════ -->
 <section>
   <div class="wrap">
-    <div class="feature">
-      <div>
-        <div class="sec-label" data-i18n="lblCap">1초 캡처</div>
-        <h2 data-i18n="h2Cap">사라지기 전에 붙잡습니다.</h2>
-        <p class="lead" data-i18n="leadCap">무슨 앱을 쓰던 중이든 단축키 한 번이면 입력창이 뜹니다. Enter를 누르면 곧장 Staging 맨 윗단으로.</p>
-        <div class="kbdrow" style="margin-top:20px">
-          <kbd>⌘</kbd><kbd>⇧</kbd><kbd>Space</kbd><span style="margin:0 4px">→</span><span data-i18n="typeWord">입력</span><span style="margin:0 4px">→</span><kbd>Enter</kbd>
-        </div>
-      </div>
-      <div class="fig">
-        <div style="width:100%;max-width:280px">
-          <div style="background:var(--card);border:1px solid var(--line-strong);border-radius:11px;padding:12px 14px;box-shadow:0 16px 34px -16px rgba(0,0,0,.6)">
-            <div style="font-size:11px;color:var(--muted);letter-spacing:.1em;margin-bottom:8px" data-i18n="quickLabel">빠른 입력</div>
-            <div style="font-size:15px"><span data-i18n="th1">모니터암 알아보기</span><span style="opacity:.4">▏</span></div>
-          </div>
-        </div>
+    <div class="duo-card dark">
+      <p class="sec-label" data-i18n="lblDone">할 일 관리</p>
+      <h3 data-i18n="h2Done">끝낸 일은 더 깊이<br>가라앉습니다.</h3>
+      <p data-i18n="leadDone">Origin에 남긴 것이 할 일이라면 체크하세요. 취소선과 함께 바닥으로 가라앉아, 살아있는 일만 위에 남습니다.</p>
+      <div class="todo-list" aria-hidden="true">
+        <div class="thought"><span class="box"></span><span data-i18n="mQuick5">월간 보고서 초안 쓰기</span></div>
+        <div class="thought"><span class="box"></span><span data-i18n="mTh4">모니터암 알아보기</span></div>
+        <div class="thought done"><span class="chk">✓</span><span data-i18n="mTh3b">운동 예약하기</span></div>
+        <div class="thought done"><span class="chk">✓</span><span data-i18n="mTh5">책상 정리하기</span></div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- always on -->
-<section>
-  <div class="wrap">
-    <div class="feature rev">
-      <div>
-        <div class="sec-label" data-i18n="lblOn">늘 바탕화면에</div>
-        <h2 data-i18n="h2On">열러 갈 필요가 없습니다.</h2>
-        <p class="lead" data-i18n="leadOn">FlowDesk는 상주 위젯입니다. 창을 띄우고 닫는 과정 없이, 생각이 지나갈 때 바로 그 자리에 적습니다.</p>
+<!-- ═══════════ 5. 일정 상세 (신규) ═══════════ -->
+<section id="detail" class="alt">
+  <div class="wrap feature">
+    <div>
+      <p class="sec-label" data-i18n="lblDetail">일정 상세</p>
+      <h2 data-i18n="h2Detail">한 줄이<br><b>실행 계획이 됩니다.</b></h2>
+      <p class="lead" data-i18n="leadDetail">캘린더의 일정을 클릭하면 상세 패널이 열립니다. 날짜만이 아니라 세부 내용까지 — 모든 일정이 하나의 작은 마크다운 문서가 됩니다.</p>
+      <ul class="feat-list">
+        <li data-i18n="fMd"><b>마크다운 메모</b> — 굵게, 기울임, 코드, 링크, 목록</li>
+        <li data-i18n="fTag"><b>태그 색</b> — 프로젝트별로 한눈에 구분</li>
+        <li data-i18n="fRange"><b>기간</b> — 시작~종료, 며칠짜리 일정도</li>
+        <li data-i18n="fDone"><b>완료 체크</b> — 캘린더에서도 끝낸 일 표시</li>
+      </ul>
+    </div>
+    <div class="device detail-panel" aria-hidden="true">
+      <div class="dp-head"><span data-i18n="mQuick6">월간 보고서 초안 쓰기</span><span class="x">✕</span></div>
+      <div class="dp-row">
+        <span class="lbl" data-i18n="dpTag">태그</span>
+        <span class="tag-dot sel" style="background:#3B6EF6"></span>
+        <span class="tag-dot" style="background:#E85D75"></span>
+        <span class="tag-dot" style="background:#F0A84B"></span>
+        <span class="tag-dot" style="background:#4BB47B"></span>
+        <span class="tag-dot" style="background:#9B6EE8"></span>
       </div>
-      <div class="fig">
-        <div style="width:100%">
-          <div style="height:90px;background:linear-gradient(160deg,#2A2E4E,#1A1C2C);border-radius:12px;position:relative;border:1px solid var(--line)">
-            <div style="position:absolute;right:12px;bottom:12px;width:96px;background:var(--card);border:1px solid var(--line-strong);border-radius:8px;padding:7px 8px;box-shadow:0 10px 22px -10px rgba(0,0,0,.6)">
-              <div style="font-size:8px;font-weight:700;letter-spacing:.12em;color:#8E94C8">STAGING</div>
-              <div style="height:6px;background:var(--stage);border-radius:3px;margin-top:6px"></div>
-              <div style="height:6px;background:var(--stage);border-radius:3px;margin-top:4px;width:70%"></div>
-            </div>
-          </div>
-          <div style="text-align:center;font-size:12px;color:var(--muted);margin-top:10px" data-i18n="capOn">항상 켜져 있는 위젯</div>
-        </div>
+      <div class="dp-row">
+        <span class="lbl" data-i18n="dpRange">기간</span>
+        <span class="dp-date">2026-07-20</span><span style="color:var(--night-muted)">→</span><span class="dp-date">2026-07-22</span>
       </div>
+      <div class="dp-note">
+        <span data-i18n="dpNote1"><b>핵심 지표</b> 먼저 정리하고 시작</span><br>
+        <span data-i18n="dpNote2">초안은 <code>report-draft.md</code>에, 참고: <a>지난 분기 회고</a></span>
+        <ul><li data-i18n="dpNote3">지출 그래프 추가</li></ul>
+      </div>
+      <div class="dp-foot"><span class="box" style="width:14px;height:14px;border-radius:50%;border:1.5px solid var(--card-line-strong);display:inline-block"></span><span data-i18n="dpDone">완료</span></div>
     </div>
   </div>
 </section>
 
-<!-- done tasks -->
-<section>
+<!-- ═══════════ 6. 설치 안내 ═══════════ -->
+<section id="install">
   <div class="wrap">
-    <div class="feature">
-      <div>
-        <div class="sec-label" data-i18n="lblDone">할 일 관리</div>
-        <h2 data-i18n="h2Done">끝낸 일은 더 깊이 가라앉습니다.</h2>
-        <p class="lead" data-i18n="leadDone">Origin에 남긴 것이 할 일이라면 체크 한 번으로 완료 표시하세요. 취소선과 함께 리스트 맨 아래로 가라앉고, 살아있는 일만 위에 남습니다.</p>
-      </div>
-      <div class="fig">
-        <div style="width:100%;max-width:250px">
-          <div class="thought"><span class="grip">⠿</span><span data-i18n="th1">모니터암 알아보기</span></div>
-          <div class="thought"><span class="grip">⠿</span><span data-i18n="th5">보고서 초안 쓰기</span></div>
-          <div class="thought done"><span class="chk">✓</span><span data-i18n="th6">운동 예약하기</span></div>
-          <div class="thought done"><span class="chk">✓</span><span data-i18n="th4">책상 정리하기</span></div>
-        </div>
-      </div>
+    <div class="center">
+      <p class="sec-label" data-i18n="lblInstall">설치 안내</p>
+      <h2 data-i18n="h2Install"><span class="thin">최초 1회만</span> <b>필요합니다.</b></h2>
+      <p class="lead install-note" data-i18n="leadInstall"><b>Microsoft Store로 설치하면 이 과정이 없습니다.</b> 아직 서명 인증이 없는 .exe/.dmg 직접 다운로드에만 해당합니다 — 아래대로 한 번만 통과하면 됩니다.</p>
     </div>
-  </div>
-</section>
-
-<!-- install / faq -->
-<section>
-  <div class="wrap">
-    <div class="sec-label" data-i18n="lblInstall">설치 안내</div>
-    <h2 data-i18n="h2Install">최초 1회만 필요합니다.</h2>
-    <p class="lead" data-i18n="leadInstall">아직 서명 인증서 적용 전이라 나타나는 안내입니다. 아래대로 한 번만 통과하면 됩니다.</p>
-
     <div class="faq">
-      <details open>
+      <details>
         <summary><span class="plat" data-i18n="platAll">공통</span><span data-i18n="q1">“일반적으로 다운로드되지 않는 파일” 경고가 뜨면</span></summary>
-        <p data-i18n="a1">브라우저 다운로드 목록에서 <b>계속</b>(또는 유지)을 선택하면 됩니다.</p>
+        <p data-i18n="a1">브라우저 다운로드 목록에서 <b>계속(유지)</b>을 선택하면 됩니다.</p>
       </details>
       <details>
         <summary><span class="plat">WINDOWS</span><span data-i18n="q2">SmartScreen “PC를 보호했습니다” 화면이 뜨면</span></summary>
@@ -353,34 +522,106 @@
       </details>
       <details>
         <summary><span class="plat" data-i18n="platAll2">공통</span><span data-i18n="q4">이후 업데이트는 어떻게 하나요</span></summary>
-        <p data-i18n="a4">새 버전이 나오면 위젯이 알려줍니다. 알림을 놓쳤다면 <b>설정 → 정보 → 업데이트 확인</b>으로 언제든 직접 설치할 수 있습니다.</p>
+        <p data-i18n="a4"><b>Microsoft Store 설치본은 스토어가 자동으로 업데이트합니다.</b> 직접 설치본은 새 버전이 나오면 위젯이 알려주고, 놓쳤다면 <b>설정 → 정보 → 업데이트 확인</b>으로 언제든 직접 설치할 수 있습니다.</p>
       </details>
     </div>
-
-    <p class="privacy" data-i18n="privacy">모든 데이터는 내 PC에 저장됩니다. Google 로그인은 선택이며, 연결 시 내 드라이브의 앱 전용 공간에만 백업됩니다.</p>
-
-    <div class="btns" style="margin-top:34px">
-      <a class="btn primary js-dl-mac" target="_blank" rel="noopener" data-i18n="dlMac" href="https://github.com/wocjf7170/flowdesk-release/releases/latest">macOS용 다운로드</a>
-      <a class="btn ghost js-dl-win" target="_blank" rel="noopener" data-i18n="dlWin" href="https://apps.microsoft.com/detail/9n9rjdmv11tb?hl=ko-KR&amp;gl=KR">Windows용 다운로드</a>
-    </div>
-    <p class="meta-note" style="margin-top:10px"><a class="js-dl-exe" target="_blank" rel="noopener" href="https://github.com/wocjf7170/flowdesk-release/releases/latest" data-i18n="dlExe">Windows .exe 직접 다운로드</a></p>
   </div>
 </section>
 
+<!-- ═══════════ 7. 푸터 ═══════════ -->
 <footer>
   <div class="wrap">
+    <span class="foot-logo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="7" y="4.5" width="10" height="3.4" rx="1.7" fill="#3C4270"/><rect x="5" y="10.3" width="14" height="3.4" rx="1.7" fill="#4C56A2"/><rect x="3" y="16.1" width="18" height="3.4" rx="1.7" fill="#6E80E8"/></svg>FlowDesk</span>
+    <p class="foot-tag" data-i18n="footTag">스치는 생각을 붙잡는<br><b>가장 빠른 방법.</b></p>
+    <p class="foot-privacy" data-i18n="privacy">모든 데이터는 내 PC에 저장됩니다. Google 로그인은 선택이며, 연결 시 내 드라이브의 앱 전용 공간에만 백업됩니다.</p>
+    <div class="btns">
+      <a class="btn primary js-dl-win" target="_blank" rel="noopener" data-i18n="dlWin" href="https://apps.microsoft.com/detail/9n9rjdmv11tb?hl=ko-KR&amp;gl=KR">Windows용 다운로드</a>
+      <a class="btn ghost js-dl-mac" target="_blank" rel="noopener" data-i18n="dlMac" href="https://github.com/wocjf7170/flowdesk-release/releases/latest">macOS용 다운로드</a>
+    </div>
+    <p class="meta-note"><a class="js-dl-exe" target="_blank" rel="noopener" href="https://github.com/wocjf7170/flowdesk-release/releases/latest" data-i18n="dlExe">Windows .exe 직접 다운로드</a></p>
     <div class="foot-links">
       <a href="https://github.com/wocjf7170/flowdesk-release/issues/new" data-i18n="footFeedback">의견 보내기</a>
       <a href="https://github.com/wocjf7170/flowdesk-release">GitHub</a>
       <a href="https://github.com/wocjf7170/flowdesk-release/releases/latest" data-i18n="footAll">모든 버전</a>
       <a href="privacy" data-i18n="footPrivacy">개인정보 처리방침</a>
     </div>
-    <span data-i18n="footTag">붙잡은 생각은 가라앉아 자리를 잡고, 나머지는 흘러가게 둡니다.<br>그래서 FlowDesk입니다.</span>
+    <p class="copyright">© 2026 FlowDesk</p>
   </div>
 </footer>
 
 <script>
-  // 최신 릴리스 에셋 직링크 연결
+  // ---------- 히어로 미니 데모: 입력→Staging, 아래 칸 드래그 승격, 체크 가라앉기 ----------
+  (() => {
+    const demo = document.getElementById('hero-demo');
+    const staging = demo.querySelector('.b-staging');
+    const origin = demo.querySelector('.b-origin');
+    const input = demo.querySelector('input');
+    let dragged = null;
+
+    demo.querySelectorAll('.thought').forEach((t) => { t.draggable = true; });
+
+    const lead = (cls, txt) => { const s = document.createElement('span'); s.className = cls; s.textContent = txt || ''; return s; };
+    const firstDone = () => origin.querySelector('.thought.done');
+    const intoOrigin = (t) => { // Staging 카드 → Origin (grip → 체크 동그라미)
+      t.classList.remove('fade', 'pin'); t.classList.add('new');
+      t.firstElementChild.replaceWith(lead('box'));
+      origin.insertBefore(t, firstDone());
+    };
+    const schedule = (t, day) => { // Origin 카드 → 캘린더 일정 칩
+      day.querySelector('.evt')?.remove();
+      const evt = document.createElement('div'); evt.className = 'evt';
+      evt.textContent = t.querySelector('span:last-child').textContent;
+      day.appendChild(evt); day.classList.add('active');
+      t.remove();
+    };
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' || e.isComposing || !input.value.trim()) return;
+      const t = document.createElement('div'); t.className = 'thought pin new'; t.draggable = true;
+      const txt = document.createElement('span'); txt.textContent = input.value.trim();
+      t.append(lead('grip', '⠿'), txt);
+      staging.querySelector('.band-head').insertAdjacentElement('afterend', t);
+      staging.querySelectorAll('.thought')[4]?.remove(); // 최대 4개 유지
+      input.value = '';
+    });
+
+    demo.addEventListener('click', (e) => {
+      const t = e.target.closest('.thought');
+      if (!t) return;
+      if (staging.contains(t)) return intoOrigin(t); // 클릭/탭 승격 (모바일 폴백)
+      if (!origin.contains(t)) return;
+      if (t.classList.contains('done')) { // 체크 해제 → 다시 위로
+        t.classList.remove('done');
+        t.firstElementChild.replaceWith(lead('box'));
+        origin.insertBefore(t, firstDone());
+      } else { // 체크 → 바닥으로 가라앉기
+        t.classList.add('done');
+        t.firstElementChild.replaceWith(lead('chk', '✓'));
+        origin.appendChild(t);
+      }
+    });
+
+    const clearOver = () => demo.querySelectorAll('.dragover').forEach((el) => el.classList.remove('dragover'));
+    demo.addEventListener('dragstart', (e) => { dragged = e.target.closest('.thought'); });
+    demo.addEventListener('dragend', () => { dragged = null; clearOver(); });
+    demo.addEventListener('dragover', (e) => {
+      if (!dragged) return;
+      // 한 칸씩 아래로: Staging → Origin, Origin → 캘린더 날짜
+      const target = origin.contains(dragged) ? e.target.closest('.cal-day') : e.target.closest('.b-origin');
+      if (!target) return;
+      e.preventDefault();
+      clearOver(); target.classList.add('dragover');
+    });
+    demo.addEventListener('drop', (e) => {
+      if (!dragged) return;
+      e.preventDefault(); clearOver();
+      const day = e.target.closest('.cal-day');
+      if (origin.contains(dragged) && day) schedule(dragged, day);
+      else if (staging.contains(dragged) && e.target.closest('.b-origin')) intoOrigin(dragged);
+    });
+  })();
+
+  // 최신 릴리스 에셋 직링크 연결 (.dmg → mac 버튼, .exe → 백업 링크)
   (async () => {
     const macBtns = document.querySelectorAll('.js-dl-mac');
     const exeBtns = document.querySelectorAll('.js-dl-exe');
@@ -401,52 +642,77 @@
 
   // ---------- KO/EN ----------
   const EN = {
+    navCapture: '1-second capture',
+    navHow: 'How it works',
+    navInstall: 'Install guide',
+    navCta: 'Download free',
     kicker: 'A thought-organizing widget that lives on your desktop',
-    h1: 'Write it when it surfaces,<br>keep it when it settles.',
-    sub: 'Catch thoughts with one hotkey and sort them by dragging down. Your data stays on your PC.',
+    h1: 'A passing thought<br><b>becomes a plan.</b>',
+    c1: 'Catch', c2: 'Keep', c3: 'Check off', c4: 'Schedule', c5: 'Markdown note',
+    sub: 'One hotkey from any screen. Your data stays on your PC.',
     dlMac: 'Download for macOS',
     dlWin: 'Download for Windows',
-    dlExe: 'Direct Windows .exe download',
-    hotkeyNote: '<kbd>⌘</kbd> <kbd>⇧</kbd> <kbd>Space</kbd> — summon the input from any app in a second',
+    dlExe: 'direct .exe download',
+    storeNote: 'On Windows, FlowDesk installs safely from the Microsoft Store',
+    hotkeyNote: '<kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>Space</kbd> <span style="opacity:.55">(macOS <kbd>⌘</kbd> <kbd>⇧</kbd> <kbd>Space</kbd>)</span> — summon the input from any app in a second',
     allVersions: 'All versions',
     tagStaging: 'dump it all here',
     tagOrigin: 'what you chose to keep',
     tagCal: 'what got a date',
-    th1: 'Research monitor arms',
-    th1e: 'Research monitor arms',
-    th2: "What's for lunch",
-    th3: 'Find that font I saw',
-    th4: 'Tidy up the desk',
-    th5: 'Draft the report',
-    th6: 'Book a workout',
-    dowTue: 'Tue', dowWed: 'Wed', dowThu: 'Thu',
-    lblHow: 'How it works',
-    h2How: 'It settles in three stages.',
-    leadHow: "You don't organize upward. Drag down only the thoughts worth keeping — they settle onto firmer ground.",
-    s1h: 'Dump everything here',
-    s1p: "Thoughts pile up as they come. Sorting is for later — you don't have to keep them all.",
-    s1d: '<b>= Temporary.</b> Whatever you don\'t pick is cleared at once with <b>⟳</b>.',
-    s2h: 'Where the chosen settle',
-    s2p: 'Only what you drag down settles and stays. From here on, nothing disappears.',
-    s2d: '<b>= Permanent.</b> Check off finished tasks — done ones sink lower.',
-    s3h: 'Where it becomes a date',
-    s3p: "Drop it on a date and it's an event. The widget is always there — nothing to reopen.",
-    s3d: '<b>= Schedule.</b> Pinned to a date with a single drag.',
+    mPh: 'A thought just crossed your mind…',
+    lblDemo: 'Mini demo',
+    h2Demo: '<span class="thin">Before you install,</span> <b>try it right here.</b>',
+    demoHint: 'Type and hit <b>Enter</b>, drag cards <b>down a band</b>, click a circle to <b>check off</b>',
+    mQuick2: 'Draft the monthly report',
+    mQuick3: 'Draft the monthly report',
+    mQuick4: 'Draft the monthly report',
+    mQuick5: 'Draft the monthly report',
+    mQuick6: 'Draft the monthly report',
+    mTh1: 'Check the meeting room booking',
+    mTh2: "What's for lunch",
+    mTh3: 'Book a workout',
+    mTh3b: 'Book a workout',
+    mTh4: 'Research monitor arms',
+    mTh5: 'Tidy up the desk',
+    mEvt: 'Monthly report',
+    dowMon: 'Mon', dowTue: 'Tue', dowWed: 'Wed',
     lblCap: '1-second capture',
-    h2Cap: 'Catch it before it fades.',
-    leadCap: "Whatever app you're in, one hotkey opens the input. Press Enter and it lands right at the top of Staging.",
+    h2Cap: 'Ever lost a thought<br><b>while opening a note app?</b>',
+    leadCap: "Mid-coding, mid-meeting — one hotkey, one Enter, done. It lands right at the top of Staging, and your flow never breaks.",
     typeWord: 'type',
     quickLabel: 'Quick input',
-    lblOn: 'Always on your desktop',
-    h2On: 'Nothing to open.',
-    leadOn: 'FlowDesk is a resident widget. No windows to launch or close — write it down right where the thought passes by.',
-    capOn: "A widget that's always on",
+    quickHint: 'saved straight to Staging',
+    lblHow: 'How it works',
+    h2How: '<span class="thin">It takes shape</span> <b>in three stages.</b>',
+    leadHow: "Don't organize — let it settle. No folders, no tags. Drag down only what's worth keeping and it lands on firmer ground.",
+    s1h: 'Dump everything here',
+    s1p: "Thoughts pile up as they come. Sorting is for later — you don't have to keep them all.",
+    s1d: '<b>= Temporary.</b> Whatever you don\'t pick is cleared at once with ⟳.',
+    s2h: 'Where the chosen stay',
+    s2p: 'Only what you drag down remains. From here on, nothing disappears.',
+    s2d: '<b>= Permanent.</b> If it\'s a task, check it — done ones sink lower.',
+    s3h: 'Where it becomes a date',
+    s3p: "Drop it on a date — it's a schedule. No forms, no dialogs.",
+    s3d: '<b>= Schedule.</b> Pinned to a date with a single drag.',
     lblDone: 'Task tracking',
-    h2Done: 'Finished things sink deeper.',
+    h2Done: 'Finished things<br>sink deeper.',
     leadDone: 'If what you kept in Origin is a task, check it off. It sinks to the bottom with a strikethrough, leaving only live work on top.',
+    lblDetail: 'Event details',
+    h2Detail: 'One line becomes<br><b>a real plan.</b>',
+    leadDetail: 'Click any event on the calendar and a detail panel opens. Not just the date but the details — every event becomes a small markdown document.',
+    fMd: '<b>Markdown notes</b> — bold, italics, code, links, lists',
+    fTag: '<b>Tag colors</b> — tell projects apart at a glance',
+    fRange: '<b>Date range</b> — start to end, even multi-day',
+    fDone: '<b>Done check</b> — mark finished work on the calendar too',
+    dpTag: 'Tag',
+    dpRange: 'Dates',
+    dpNote1: 'Start by outlining the <b>key metrics</b>',
+    dpNote2: 'Draft in <code>report-draft.md</code>, see: <a>last quarter\'s retro</a>',
+    dpNote3: 'Add the spending graph',
+    dpDone: 'Done',
     lblInstall: 'Install guide',
-    h2Install: 'Needed only once.',
-    leadInstall: "These prompts appear because the app isn't code-signed yet. Pass them once as below.",
+    h2Install: '<span class="thin">Needed</span> <b>only once.</b>',
+    leadInstall: '<b>Installing from the Microsoft Store skips all of this.</b> These prompts only apply to direct .exe/.dmg downloads, which aren\'t code-signed yet — pass them once as below.',
     platAll: 'ALL', platAll2: 'ALL',
     q1: 'If you see a “not commonly downloaded” warning',
     a1: "Choose <b>Keep</b> (or Continue) in your browser's download list.",
@@ -455,15 +721,17 @@
     q3: 'If it says “cannot be opened / unidentified developer”',
     a3: 'Run FlowDesk once and close the dialog, then open <b>System Settings → Privacy &amp; Security</b>, click <b>“Open Anyway”</b> near the bottom, and run it again. On macOS 14 and earlier, right-click → Open in the Applications folder also works.',
     q4: 'How do updates work afterwards?',
-    a4: "The widget notifies you when a new version is out. Missed it? Install anytime via <b>Settings → About → Check for updates</b>.",
+    a4: '<b>Microsoft Store installs update automatically through the Store.</b> Direct installs notify you in the widget when a new version is out — or install anytime via <b>Settings → About → Check for updates</b>.',
     privacy: 'All data stays on your PC. Google sign-in is optional; when connected, backups go only to an app-private space in your Drive.',
     footFeedback: 'Feedback',
     footAll: 'All versions',
     footPrivacy: 'Privacy Policy',
-    footTag: 'Caught thoughts settle into place; the rest flows on.<br>Hence, FlowDesk.',
+    footTag: 'The fastest way to catch<br><b>a passing thought.</b>',
   };
   const KO = {};
   document.querySelectorAll('[data-i18n]').forEach((el) => { KO[el.dataset.i18n] = el.innerHTML; });
+  const KOPH = {};
+  document.querySelectorAll('[data-i18n-ph]').forEach((el) => { KOPH[el.dataset.i18nPh] = el.placeholder; });
   const toggleBtn = document.getElementById('lang-toggle');
   const STORE = { ko: 'https://apps.microsoft.com/detail/9n9rjdmv11tb?hl=ko-KR&gl=KR', en: 'https://apps.microsoft.com/detail/9n9rjdmv11tb?hl=en-US&gl=US' };
   function setLang(l) {
@@ -472,7 +740,19 @@
       const k = el.dataset.i18n;
       el.innerHTML = l === 'ko' ? KO[k] : (EN[k] ?? KO[k]);
     });
+    document.querySelectorAll('[data-i18n-ph]').forEach((el) => {
+      const k = el.dataset.i18nPh;
+      el.placeholder = l === 'ko' ? KOPH[k] : (EN[k] ?? KOPH[k]);
+    });
     document.querySelectorAll('.js-dl-win').forEach((b) => { b.href = STORE[l] || STORE.ko; });
+    const pv = document.getElementById('promo');
+    const want = l === 'ko' ? 'promo-ko' : 'promo-en';
+    if (pv && !pv.getAttribute('src').startsWith(want)) {
+      pv.pause();
+      pv.setAttribute('poster', `${want}-poster.jpg`);
+      pv.setAttribute('src', `${want}.mp4`);
+      pv.load();
+    }
     toggleBtn.textContent = l === 'ko' ? 'EN' : '한국어';
     localStorage.setItem('flowdesk-lang', l);
   }
