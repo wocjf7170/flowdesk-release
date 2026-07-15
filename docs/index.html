@@ -102,7 +102,7 @@
     border-radius:50%;background:var(--blue);opacity:.08;pointer-events:none
   }
   .hero-grid{
-    position:relative;display:grid;grid-template-columns:1fr;gap:48px;align-items:center;
+    position:relative;z-index:1;display:grid;grid-template-columns:1fr;gap:48px;align-items:center;
     padding:76px 0 84px
   }
   @media(min-width:900px){.hero-grid{grid-template-columns:1.08fr .92fr;gap:56px}}
@@ -299,7 +299,7 @@
     content:"";position:absolute;right:-200px;bottom:-220px;width:520px;height:520px;
     border-radius:50%;background:#191C2B;pointer-events:none
   }
-  footer .wrap{position:relative}
+  footer .wrap{position:relative;z-index:1} /* 장식 원(::after)이 버튼을 덮지 않게 */
   .foot-logo{display:inline-flex;align-items:center;gap:9px;font-weight:650;font-size:17px}
   .foot-tag{font-size:clamp(24px,3.6vw,34px);font-weight:450;letter-spacing:-0.02em;line-height:1.25;margin-top:26px}
   .foot-tag b{font-weight:800}
