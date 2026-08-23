@@ -500,6 +500,23 @@
   </div>
 </section>
 
+<!-- ═══════════ 5.5 달력 꾸미기 ═══════════ -->
+<section id="deco">
+  <div class="wrap">
+    <div class="center">
+      <p class="sec-label" data-i18n="lblDeco">달력 꾸미기</p>
+      <h2 data-i18n="h2Deco">판다 스티커와 도장으로,<br><b>다이어리처럼 꾸며보세요.</b></h2>
+      <p class="lead" data-i18n="leadDeco">기본 제공되는 판다·햄스터 스티커와 도장을 달력 위에 콕콕. 내 사진을 잘라 나만의 스티커와 도장을 만들 수도 있고, 판다 테마로 분위기까지 바꿀 수 있습니다. 할 일 관리에도 꾸미는 재미가 필요하니까요.</p>
+      <div class="chain" style="justify-content:center">
+        <span class="chip" data-i18n="dc1">기본 스티커 10종</span>
+        <span class="chip" data-i18n="dc2">도장 찍기</span>
+        <span class="chip" data-i18n="dc3">내 사진으로 제작</span>
+        <span class="chip" data-i18n="dc4">판다 테마</span>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ═══════════ 6. 설치 안내 ═══════════ -->
 <section id="install">
   <div class="wrap">
@@ -729,6 +746,10 @@
     footAll: 'All versions',
     footPrivacy: 'Privacy Policy',
     footTag: 'The fastest way to catch<br><b>a passing thought.</b>',
+    lblDeco: 'Decorate',
+    h2Deco: 'Panda stickers and stamps —<br><b>make it feel like a diary.</b>',
+    leadDeco: 'Drop the built-in panda and hamster stickers and stamps right onto your calendar. Crop your own photos into custom stickers, switch on the panda theme. Task tracking deserves a little joy, too.',
+    dc1: '10 built-in stickers', dc2: 'Stamps', dc3: 'Make your own from photos', dc4: 'Panda theme',
   };
   const KO = {};
   document.querySelectorAll('[data-i18n]').forEach((el) => { KO[el.dataset.i18n] = el.innerHTML; });
