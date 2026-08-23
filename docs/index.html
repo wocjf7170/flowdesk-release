@@ -370,38 +370,6 @@
   </div>
 </header>
 
-<!-- ═══════════ 2. 미니 데모 (직접 써보기) ═══════════ -->
-<section id="demo" class="video-sec">
-  <div class="wrap">
-    <p class="sec-label" data-i18n="lblDemo">미니 데모</p>
-    <h2 data-i18n="h2Demo"><span class="thin">설치 전에,</span> <b>직접 써보세요.</b></h2>
-    <p class="lead" data-i18n="demoHint">입력하고 <b>Enter</b>, 카드는 <b>아래 칸으로 드래그</b>, 동그라미는 <b>체크</b></p>
-    <div class="device demo-device" id="hero-demo" aria-label="FlowDesk interactive demo">
-      <div class="device-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="device-title">FlowDesk</span></div>
-      <div class="quick-row"><input type="text" maxlength="40" data-i18n-ph="mPh" placeholder="지금 떠오른 생각…" aria-label="빠른 입력"></div>
-      <div class="band b-staging">
-        <div class="band-head"><span class="band-name">STAGING</span><span class="band-tag" data-i18n="tagStaging">일단 쏟아내는 곳</span></div>
-        <div class="thought"><span class="grip">⠿</span><span data-i18n="mTh1">회의실 예약 확인</span></div>
-        <div class="thought fade"><span class="grip">⠿</span><span data-i18n="mTh2">점심 뭐 먹지</span></div>
-        <div class="thought pin"><span class="grip">⠿</span><span data-i18n="mQuick2">월간 보고서 초안 쓰기</span></div>
-      </div>
-      <div class="band b-origin">
-        <div class="band-head"><span class="band-name">ORIGIN</span><span class="band-tag" data-i18n="tagOrigin">골라 남긴 것</span></div>
-        <div class="thought"><span class="box"></span><span data-i18n="mQuick3">월간 보고서 초안 쓰기</span></div>
-        <div class="thought done"><span class="chk">✓</span><span data-i18n="mTh3">운동 예약하기</span></div>
-      </div>
-      <div class="band b-cal">
-        <div class="band-head"><span class="band-name">CALENDAR</span><span class="band-tag" data-i18n="tagCal">날짜가 된 것</span></div>
-        <div class="cal-row">
-          <div class="cal-day"><div class="dow" data-i18n="dowMon">월</div><div class="num">20</div></div>
-          <div class="cal-day active"><div class="dow" data-i18n="dowTue">화</div><div class="num">21</div><div class="evt" data-i18n="mEvt">월간 보고서</div></div>
-          <div class="cal-day"><div class="dow" data-i18n="dowWed">수</div><div class="num">22</div></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- ═══════════ 3. 1초 캡처 ═══════════ -->
 <section id="capture" class="capture-blob alt">
   <div class="wrap feature">
@@ -447,23 +415,6 @@
         <h3 data-i18n="s3h">날짜가 되는 곳</h3>
         <p data-i18n="s3p">날짜 위에 놓는 순간 일정입니다. 입력 폼도, 창도 없습니다.</p>
         <p class="def" data-i18n="s3d"><b>= 일정.</b> 드래그 한 번으로 날짜에 고정.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ═══════════ 4. 투두 ═══════════ -->
-<section>
-  <div class="wrap">
-    <div class="duo-card dark">
-      <p class="sec-label" data-i18n="lblDone">할 일 관리</p>
-      <h3 data-i18n="h2Done">끝낸 일은 더 깊이<br>가라앉습니다.</h3>
-      <p data-i18n="leadDone">Origin에 남긴 것이 할 일이라면 체크하세요. 취소선과 함께 바닥으로 가라앉아, 살아있는 일만 위에 남습니다.</p>
-      <div class="todo-list" aria-hidden="true">
-        <div class="thought"><span class="box"></span><span data-i18n="mQuick5">월간 보고서 초안 쓰기</span></div>
-        <div class="thought"><span class="box"></span><span data-i18n="mTh4">모니터암 알아보기</span></div>
-        <div class="thought done"><span class="chk">✓</span><span data-i18n="mTh3b">운동 예약하기</span></div>
-        <div class="thought done"><span class="chk">✓</span><span data-i18n="mTh5">책상 정리하기</span></div>
       </div>
     </div>
   </div>
@@ -575,77 +526,6 @@
 </footer>
 
 <script>
-  // ---------- 히어로 미니 데모: 입력→Staging, 아래 칸 드래그 승격, 체크 가라앉기 ----------
-  (() => {
-    const demo = document.getElementById('hero-demo');
-    const staging = demo.querySelector('.b-staging');
-    const origin = demo.querySelector('.b-origin');
-    const input = demo.querySelector('input');
-    let dragged = null;
-
-    demo.querySelectorAll('.thought').forEach((t) => { t.draggable = true; });
-
-    const lead = (cls, txt) => { const s = document.createElement('span'); s.className = cls; s.textContent = txt || ''; return s; };
-    const firstDone = () => origin.querySelector('.thought.done');
-    const intoOrigin = (t) => { // Staging 카드 → Origin (grip → 체크 동그라미)
-      t.classList.remove('fade', 'pin'); t.classList.add('new');
-      t.firstElementChild.replaceWith(lead('box'));
-      origin.insertBefore(t, firstDone());
-    };
-    const schedule = (t, day) => { // Origin 카드 → 캘린더 일정 칩
-      day.querySelector('.evt')?.remove();
-      const evt = document.createElement('div'); evt.className = 'evt';
-      evt.textContent = t.querySelector('span:last-child').textContent;
-      day.appendChild(evt); day.classList.add('active');
-      t.remove();
-    };
-
-    input.addEventListener('keydown', (e) => {
-      if (e.key !== 'Enter' || e.isComposing || !input.value.trim()) return;
-      const t = document.createElement('div'); t.className = 'thought pin new'; t.draggable = true;
-      const txt = document.createElement('span'); txt.textContent = input.value.trim();
-      t.append(lead('grip', '⠿'), txt);
-      staging.querySelector('.band-head').insertAdjacentElement('afterend', t);
-      staging.querySelectorAll('.thought')[4]?.remove(); // 최대 4개 유지
-      input.value = '';
-    });
-
-    demo.addEventListener('click', (e) => {
-      const t = e.target.closest('.thought');
-      if (!t) return;
-      if (staging.contains(t)) return intoOrigin(t); // 클릭/탭 승격 (모바일 폴백)
-      if (!origin.contains(t)) return;
-      if (t.classList.contains('done')) { // 체크 해제 → 다시 위로
-        t.classList.remove('done');
-        t.firstElementChild.replaceWith(lead('box'));
-        origin.insertBefore(t, firstDone());
-      } else { // 체크 → 바닥으로 가라앉기
-        t.classList.add('done');
-        t.firstElementChild.replaceWith(lead('chk', '✓'));
-        origin.appendChild(t);
-      }
-    });
-
-    const clearOver = () => demo.querySelectorAll('.dragover').forEach((el) => el.classList.remove('dragover'));
-    demo.addEventListener('dragstart', (e) => { dragged = e.target.closest('.thought'); });
-    demo.addEventListener('dragend', () => { dragged = null; clearOver(); });
-    demo.addEventListener('dragover', (e) => {
-      if (!dragged) return;
-      // 한 칸씩 아래로: Staging → Origin, Origin → 캘린더 날짜
-      const target = origin.contains(dragged) ? e.target.closest('.cal-day') : e.target.closest('.b-origin');
-      if (!target) return;
-      e.preventDefault();
-      clearOver(); target.classList.add('dragover');
-    });
-    demo.addEventListener('drop', (e) => {
-      if (!dragged) return;
-      e.preventDefault(); clearOver();
-      const day = e.target.closest('.cal-day');
-      if (origin.contains(dragged) && day) schedule(dragged, day);
-      else if (staging.contains(dragged) && e.target.closest('.b-origin')) intoOrigin(dragged);
-    });
-  })();
-
   // 최신 릴리스 에셋 직링크 연결 (.dmg → mac 버튼, .exe → 백업 링크)
   (async () => {
     const macBtns = document.querySelectorAll('.js-dl-mac');
